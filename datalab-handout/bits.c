@@ -1,4 +1,4 @@
-#updated 2021/4/19
+//updated 2021/4/19
 /* 
  * CS:APP Data Lab 
  * 
@@ -143,8 +143,9 @@ NOTES:
  *   Max ops: 14
  *   Rating: 1
  */
-int bitXor(int x, int y) {
-  return ~(~x&~y)&~(x&y);
+int bitXor(int x, int y) { 
+    /*不涉及移位运算，分别考虑四种情况即可*/
+    return ~(~x&~y)&~(x&y);
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -153,8 +154,7 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-  return (1<<31);
-
+    return (1<<31);
 }
 //2
 /*
@@ -165,7 +165,8 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return !((x+1)^(~x))&!!(~x^0);
+    /*(x+1)==~x只有-1和Tmax*/
+    return !((x+1)^(~x))&!!(~x^0);
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -187,7 +188,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return ~x+1;
+    return ~x+1;
 }
 //3
 /* 
@@ -200,7 +201,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return !((x&~0xf)^0x30)&(!(((x&0xf)+0x6)&0x10));
+    return !((x&~0xf)^0x30)&(!(((x&0xf)+0x6)&0x10));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -210,9 +211,10 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-   x=!!x;
-   x=~x+1;
-   return (x&y)|(~x&z);
+    /*让|左右其中一个为0，实现条件判断*/
+    x=!!x;
+    x=~x+1;
+    return (x&y)|(~x&z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -222,7 +224,9 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-   return (((x>>31)^(y>>31))&((x>>31)&0x1))|((!((x>>31)^(y>>31)))&(!!((x+~y)>>31)));
+    /*分同号、异号两种情况判断*/
+    int sx = x >> 31, sy = y >> 31;
+    return ((sx^sy)&(sx&0x1))|((!(sx^sy))&(!!((x+~y)>>31)));
 }
 //4
 /* 
@@ -234,7 +238,8 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return (~((x|(~x+1))>>31))&0x1;
+    /*x不等于0时,x|(~x+1)最高位为1*/
+    return (~((x|(~x+1))>>31))&0x1;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -249,14 +254,15 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x){ 
-   int b=0;
-   x=((x>>31)&~x)|((~(x>>31))&x);
-   b=(!!(x>>16))<<4;
-   b=((!!((x>>8)>>b))<<3)+b;
-   b=((!!(((x>>4))>>b))<<2)+b;
-   b=((!!((x>>2)>>b))<<1)+b;
-   b=b+(!((x>>b)^0x1))+((!((x>>b)^0x2))<<1)+((!((x>>b)^0x3))<<1);
-   return b+1;
+    /*二分法（把从1中找0转化为从0中找1）*/
+    int b=0,sx=x>>31;
+    x=(sx&~x)|((~sx)&x);
+    b=(!!(x>>16))<<4;
+    b=((!!((x>>8)>>b))<<3)+b;
+    b=((!!(((x>>4))>>b))<<2)+b;
+    b=((!!((x>>2)>>b))<<1)+b;
+    b=b+(!((x>>b)^0x1))+((!((x>>b)^0x2))<<1)+((!((x>>b)^0x3))<<1);
+    return b+1;
 }
 //float
 /* 
@@ -270,16 +276,21 @@ int howManyBits(int x){
  *   Max ops: 30
  *   Rating: 4
  */
+/*
+    浮点型分段考虑，相加/减后用最高位判断是否溢出
+*/
 unsigned floatScale2(unsigned uf) {
-   if (!((uf<<1>>24)^0xff))
+    /*提前声明重复出现的变量可以节省ops*/
+    unsigned ufexp = uf << 1 >> 24,ufs=uf>>31,b32=1<<31,inf=0xff<<23;
+    if (!(ufexp^0xff))
    	return uf;
-   if (!(((uf<<1)>>24)^0)){
-      if (!((uf>>31)^0))return uf<<1;
-      return (uf<<1)+(1<<31);
-   }
-    if (!(((uf<<1)>>24)^0xfe)){
-    	if (!((uf>>31)^0))return 0xff<<23;
-    	return (0xff<<23)+(1<<31);
+    if (!(ufexp^0)){
+        if (!(ufs^0))return uf<<1;
+        return (uf<<1)+b32;
+    }
+    if (!(ufexp^0xfe)){
+    	if (!(ufs^0))return inf;
+    	return inf+(1<<31);
     }
     return uf+(1<<23);
 }
@@ -297,16 +308,15 @@ unsigned floatScale2(unsigned uf) {
  */
 int floatFloat2Int(unsigned uf) {
     int x=0;
-    unsigned b=0,e=uf<<1>>24,frac=uf<<9>>9,b24=1<<23;
-    if (((e-0x7f)>>31)^0)
+    unsigned b=(uf<<1>>24)-0x7f,frac=(uf<<9>>9)+(1<<23),b17=b-0x17,b17s=b17>>31;
+    if ((b>>31)^0)
 	return 0;
-    b=e-0x7f;
     if (((b-0x1f)>>31)^1)
     	return 0x80000000;
-    if (((b-0x17)>>31)^1)
-    	x=(frac+b24)<<(b-0x17);
-    if (((b-0x17)>>31)^0)
-    	x=(frac+b24)>>(0x17-b);
+    if (b17s^1)
+    	x=frac<<b17;
+    if (b17s^0)
+    	x=frac>>(0x17-b);
     if ((uf>>31)^0)
     	return ~x+1;
     return x;
@@ -325,11 +335,12 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-   if (((x>>31)^0)&&(((x+0x95)>>31)^0))
-   	return 0;
-   if (((x>>31)^0)&&(((x+0x7e)>>31)^0))
-   	return 1<<(x+0x95);
-   if (((x>>31)^~0)&&(((x-0x80)>>31)^~0))
-   	return 0xff<<23;
-   return (x+0x7f)<<23;
+    int sx = x >> 31,x95=x+0x95;
+    if ((sx^0)&&((x95>>31)^0))
+   	    return 0;
+    if ((sx^0)&&(((x+0x7e)>>31)^0))
+   	    return 1<<x95;
+    if ((sx^~0)&&(((x-0x80)>>31)^~0))
+   	    return 0xff<<23;
+    return (x+0x7f)<<23;
 }
