@@ -1,4 +1,5 @@
-//updated 2021/4/19
+//updated 2021/4/20
+//将重复出现的bits提前声明，可以减少ops
 /* 
  * CS:APP Data Lab 
  * 
@@ -144,7 +145,7 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) { 
-    /*不涉及移位运算，分别考虑四种情况即可*/
+    /*不涉及移位运算，分别考虑00/01/10/11四种情况即可*/
     return ~(~x&~y)&~(x&y);
 }
 /* 
@@ -211,7 +212,7 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-    /*让|左右其中一个为0，实现条件判断*/
+    /*让|两侧的表达式其中一个为0，实现条件判断*/
     x=!!x;
     x=~x+1;
     return (x&y)|(~x&z);
@@ -277,10 +278,10 @@ int howManyBits(int x){
  *   Rating: 4
  */
 /*
-    浮点型分段考虑，相加/减后用最高位判断是否溢出
+    浮点型分段考虑：非规格、规格、inf、NaN
+    比较大小的方法：相加/相减后利用最高位判断是否溢出
 */
 unsigned floatScale2(unsigned uf) {
-    /*提前声明重复出现的变量可以节省ops*/
     unsigned ufexp = uf << 1 >> 24,ufs=uf>>31,b32=1<<31,inf=0xff<<23;
     if (!(ufexp^0xff))
    	return uf;
